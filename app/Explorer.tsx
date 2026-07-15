@@ -1,11 +1,21 @@
 "use client";
 import { useMemo, useState } from "react";
+import { TutorialExperience } from "./tutorials/TutorialExperience";
 import { methods, proteins } from "./data";
 import { activity, fractionate, makeInitial, pool, purity, Sample, targetMass, totalProtein, Fraction } from "./science";
 type Step={name:string;sample:Sample;cost:number;time:number};
 const money=(n:number)=>`$${n.toFixed(0)}`, round=(n:number,d=1)=>n.toFixed(d);
 
 export function Explorer(){
+ const [entry,setEntry]=useState<"home"|"tutorial"|"free">("home");
+ if(entry==="home") return <Welcome onTutorial={()=>setEntry("tutorial")} onFree={()=>setEntry("free")}/>;
+ if(entry==="tutorial") return <TutorialExperience onExit={()=>setEntry("free")} onHome={()=>setEntry("home")}/>;
+ return <FreeExplorer onTutorial={()=>setEntry("tutorial")}/>;
+}
+
+function Welcome({onTutorial,onFree}:{onTutorial:()=>void;onFree:()=>void}){return <main className="welcome"><section className="welcome-card"><div className="mark large">P</div><span className="eyebrow">PROTEIN PURIFICATION STRATEGY EXPLORER</span><h1>Learn to follow the evidence through a purification.</h1><p>Start with a guided investigation of Enzyme A, or open the complete explorer and design your own workflow.</p><div className="entry-grid"><button className="entry primary" onClick={onTutorial}><span>RECOMMENDED · 15–20 MIN</span><b>Guided Tutorial</b><small>Six scaffolded steps with predictions, assays, pooling, and interpretation.</small><em>Start tutorial →</em></button><button className="entry" onClick={onFree}><span>OPEN WORKSPACE</span><b>Explore Freely</b><small>Choose methods, configure conditions, and build your own purification strategy.</small><em>Open explorer →</em></button></div></section></main>}
+
+function FreeExplorer({onTutorial}:{onTutorial:()=>void}){
  const [mode,setMode]=useState("Guided Explorer"), [sample,setSample]=useState<Sample>(makeInitial), [method,setMethod]=useState("salt"), [tab,setTab]=useState("Current Sample"), [bottom,setBottom]=useState("History"), [stage,setStage]=useState(2);
  const [config,setConfig]=useState<any>({low:35,high:62,pH:7.5,exchanger:"anion",gradient:500,fraction:3,load:8});
  const [prediction,setPrediction]=useState({property:"Solubility",target:"Enter the 35–62% pellet",tradeoff:"Purity may rise while recovery falls"});
@@ -23,7 +33,7 @@ export function Explorer(){
  function exportBook(){const report={application:"Protein Purification Strategy Explorer",scenario:"Purify Enzyme A from a Bacterial Lysate",seed:"CHEM214-42",mode,methodSequence:steps.map(s=>s.name),prediction,observations:notes,purificationTable:steps.map(row),cumulativeCost:cost,cumulativeTimeHours:time};const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:"application/json"}));a.download="protein-purification-notebook.json";a.click();URL.revokeObjectURL(a.href)}
  function row(s:Step,i:number){const total=totalProtein(s.sample),a=activity(s.sample),sp=a/total;return {step:i,sample:s.name,volumeMl:s.sample.volume,totalProteinMg:+total.toFixed(2),totalActivity:+a.toFixed(1),specificActivity:+sp.toFixed(2),purityPct:+purity(s.sample).toFixed(1),yieldPct:+(100*s.sample.activeTarget/initial.activeTarget).toFixed(1),purificationFold:+(sp/(activity(initial)/totalProtein(initial))).toFixed(2),cost:s.cost,timeHours:s.time}}
  return <main>
-  <header className="topbar"><div className="brand"><div className="mark">P</div><div><h1>Protein Purification <span>Strategy Explorer</span></h1><p>Use protein properties to design, test, and evaluate a purification workflow.</p></div></div><div className="header-actions"><label>Mode<select value={mode} onChange={e=>setMode(e.target.value)}><option>Guided Explorer</option><option>Purification Challenge</option><option disabled>Experimental Design — in development</option></select></label><button onClick={restart}>↻ Restart</button><button onClick={undo} disabled={steps.length<2}>↶ Undo</button><button onClick={exportBook}>⇩ Export</button><button onClick={()=>setShowHelp(true)}>? Help</button></div></header>
+  <header className="topbar"><div className="brand"><div className="mark">P</div><div><h1>Protein Purification <span>Strategy Explorer</span></h1><p>Use protein properties to design, test, and evaluate a purification workflow.</p></div></div><div className="header-actions"><button onClick={onTutorial}>▣ Tutorial</button><label>Mode<select value={mode} onChange={e=>setMode(e.target.value)}><option>Guided Explorer</option><option>Purification Challenge</option><option disabled>Experimental Design — in development</option></select></label><button onClick={restart}>↻ Restart</button><button onClick={undo} disabled={steps.length<2}>↶ Undo</button><button onClick={exportBook}>⇩ Export</button><button onClick={()=>setShowHelp(true)}>? Help</button></div></header>
   <nav className="stepper" aria-label="Workflow progress">{["Inspect Sample","Choose Method","Configure","Predict","Run","Analyze","Decide"].map((x,i)=><button key={x} className={stage===i+1?"active":stage>i+1?"done":""} onClick={()=>setStage(i+1)}><b>{stage>i+1?"✓":i+1}</b>{x}</button>)}</nav>
   <section className="workspace">
    <aside className="methods"><div className="side-title"><div><span>METHOD LIBRARY</span><h2>Choose a method</h2></div><span className="count">{methods.length}</span></div>{groups.map(g=><section key={g}><h3>{g}</h3>{methods.filter(m=>m.group===g).map(m=><button key={m.id} onClick={()=>choose(m.id)} className={method===m.id?"method active":"method"}><span className="method-icon">{m.group==="Analysis"?"◉":m.group==="Chromatography"?"⇥":"⌁"}</span><span><b>{m.name}</b><small>{m.property} · {m.cost} · {m.time}</small></span><em className={m.status==="Functional"?"ready":"planned"}>{m.status==="Functional"?"READY":"PLANNED"}</em></button>)}</section>)}</aside>
