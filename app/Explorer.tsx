@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TutorialExperience } from "./tutorials/TutorialExperience";
 import { IonExchangeTutorial } from "./tutorials/IonExchangeTutorial";
 import { methods, proteins } from "./data";
@@ -9,6 +9,7 @@ const money=(n:number)=>`$${n.toFixed(0)}`, round=(n:number,d=1)=>n.toFixed(d);
 
 export function Explorer(){
  const [entry,setEntry]=useState<"home"|"tutorial1"|"tutorial2"|"free">("home");
+ useEffect(()=>{if(entry==="tutorial1"||entry==="tutorial2")requestAnimationFrame(()=>document.querySelector<HTMLHeadingElement>(`div:not([hidden]) .tutorial-guide h1`)?.focus())},[entry]);
  return <><div hidden={entry!=="home"}><Welcome onTutorial1={()=>setEntry("tutorial1")} onTutorial2={()=>setEntry("tutorial2")} onFree={()=>setEntry("free")}/></div><div hidden={entry!=="tutorial1"}><TutorialExperience onExit={()=>setEntry("free")} onHome={()=>setEntry("home")}/></div><div hidden={entry!=="tutorial2"}><IonExchangeTutorial onExit={()=>setEntry("free")} onHome={()=>setEntry("home")}/></div><div hidden={entry!=="free"}><FreeExplorer onTutorial1={()=>setEntry("tutorial1")} onTutorial2={()=>setEntry("tutorial2")}/></div></>;
 }
 

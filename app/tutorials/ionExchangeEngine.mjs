@@ -1,4 +1,7 @@
-export function proteinCharge(pI,pH){const delta=pH-pI;return Math.abs(delta)<=.25?"approximately neutral":delta<0?"positive":"negative"}
+export function proteinCharge(pI,pH){const delta=pH-pI;return Math.abs(delta)<=.35?"approximately neutral":delta<0?"positive":"negative"}
+export function phPIRelationship(pI,pH){return Math.abs(pH-pI)<=.35?"pH ≈ pI":pH<pI?"pH < pI":"pH > pI"}
+export function numberLineMarkers(pI,pH){return {pI:Math.max(0,Math.min(100,pI/14*100)),pH:Math.max(0,Math.min(100,pH/14*100)),order:pH<pI?["pH","pI"]:pH>pI?["pI","pH"]:["pH","pI"]}}
+export function simplePI(pKa1,pKa2){return (Number(pKa1)+Number(pKa2))/2}
 export function resinCharge(type){return type==="cation"?"negative":"positive"}
 export function bindingPrediction({pI,pH,resinType,startSalt=25}){const charge=proteinCharge(pI,pH),resin=resinCharge(resinType);if(charge==="approximately neutral")return {result:"weak or uncertain binding",strength:0,elution:0};const opposite=(charge==="positive"&&resin==="negative")||(charge==="negative"&&resin==="positive");if(!opposite)return {result:"flow-through",strength:0,elution:0};const strength=Math.max(0,Math.abs(pH-pI)*75-startSalt*.12);return {result:strength<45?"weak or uncertain binding":"binds",strength,elution:Math.min(500,80+strength*2.7)} }
 export function modeledProteins(pH,resinType){return [{name:"Protein X",pI:8.5},{name:"Protein Y",pI:6.8},{name:"Protein Z",pI:4.7}].map(p=>({...p,charge:proteinCharge(p.pI,pH),...bindingPrediction({pI:p.pI,pH,resinType,startSalt:25})})).sort((a,b)=>a.elution-b.elution)}

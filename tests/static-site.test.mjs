@@ -62,7 +62,7 @@ test("tutorial chromatogram labels protein and Enzyme A activity separately", as
 });
 
 test("ion-exchange rules predict charge, resin charge, and binding", async () => {
-  const {proteinCharge,resinCharge,bindingPrediction}=await import("../app/tutorials/ionExchangeEngine.mjs");
+  const {proteinCharge,resinCharge,bindingPrediction,numberLineMarkers,phPIRelationship,simplePI,modeledProteins}=await import("../app/tutorials/ionExchangeEngine.mjs");
   assert.equal(proteinCharge(8.5,6.5),"positive");
   assert.equal(proteinCharge(5.0,7.0),"negative");
   assert.equal(proteinCharge(7.0,7.1),"approximately neutral");
@@ -70,6 +70,30 @@ test("ion-exchange rules predict charge, resin charge, and binding", async () =>
   assert.equal(resinCharge("anion"),"positive");
   assert.equal(bindingPrediction({pI:8.5,pH:6.5,resinType:"cation"}).result,"binds");
   assert.equal(bindingPrediction({pI:8.5,pH:6.5,resinType:"anion"}).result,"flow-through");
+  assert.deepEqual(numberLineMarkers(8.5,6.5).order,["pH","pI"]);
+  assert.deepEqual(numberLineMarkers(4.7,6.5).order,["pI","pH"]);
+  assert.equal(phPIRelationship(6.8,6.5),"pH ≈ pI");
+  assert.equal(bindingPrediction({pI:6.8,pH:6.5,resinType:"cation"}).result,"weak or uncertain binding");
+  const comparison=modeledProteins(6.5,"cation");
+  assert.equal(comparison.find(p=>p.name==="Protein Z").result,"flow-through");
+  assert.equal(comparison.find(p=>p.name==="Protein Y").result,"weak or uncertain binding");
+  assert.equal(comparison.find(p=>p.name==="Protein X").result,"binds");
+  assert.ok(Math.abs(simplePI(2.3,9.6)-5.95)<1e-9);
+});
+
+test("pH-pI instruction is reusable and scientifically bounded", async () => {
+  const visual=await readFile(new URL("../app/tutorials/PHPIVisuals.tsx",import.meta.url),"utf8");
+  const tutorial=await readFile(new URL("../app/tutorials/IonExchangeTutorial.tsx",import.meta.url),"utf8");
+  assert.match(visual,/PHPINumberLine/);
+  assert.match(tutorial,/PHPINumberLine pI=\{8\.5\} pH=\{6\.5\}/);
+  assert.match(tutorial,/PHPINumberLine pI=\{pI\} pH=\{pH\}/);
+  assert.match(tutorial,/PHPINumberLine pI=\{p\.pI\} pH=\{6\.5\}/);
+  assert.match(visual,/Do not average every protein/);
+  assert.match(visual,/300-residue protein/);
+  assert.match(visual,/Glycine scaffold/);
+  assert.match(visual,/Beyond the simple pH–pI rule/);
+  assert.match(tutorial,/Salt gradient/);
+  assert.match(tutorial,/protein-peak/);
 });
 
 test("completion PDF requires a name and embeds submission fields", async () => {
