@@ -134,3 +134,19 @@ test("Tutorial 2 Step 6 answers remain rendered and exported after reveal", asyn
   const step6=tutorial.slice(tutorial.indexOf('step===5'));
   assert.ok(step6.indexOf('selected={answers["flow-through"]}')<step6.indexOf('!revealed?'));
 });
+
+test("free explorer guides a pooled sample through gel analysis to evaluation", async () => {
+  const explorer=await readFile(new URL("../app/Explorer.tsx",import.meta.url),"utf8");
+  assert.match(explorer,/Step complete! You isolated a candidate enriched sample/);
+  assert.match(explorer,/setMethod\("gel"\)/);
+  assert.match(explorer,/setTab\("Gel"\)/);
+  assert.match(explorer,/next-action/);
+  assert.match(explorer,/Molecular-weight marker/);
+  assert.match(explorer,/Crude lysate/);
+  assert.match(explorer,/35–62% pellet \(Pool F2\)/);
+  assert.match(explorer,/Does the darkest band identify Enzyme A/);
+  assert.match(explorer,/SDS-PAGE shows protein abundance, not enzyme identity/);
+  assert.match(explorer,/Evaluate this step in the Purification Table/);
+  assert.match(explorer,/What is in the mixture\?/);
+  assert.match(explorer,/Was this a good step\?/);
+});
