@@ -112,3 +112,25 @@ test("tutorial student data remains session-only and is not transmitted", async 
   const joined=sources.join("\n");
   assert.doesNotMatch(joined,/localStorage|sessionStorage|fetch\(|XMLHttpRequest|sendBeacon/);
 });
+
+test("portal selection uses one session-level accessible active state", async () => {
+  const explorer=await readFile(new URL("../app/Explorer.tsx",import.meta.url),"utf8");
+  assert.match(explorer,/activePortal/);
+  assert.match(explorer,/setActivePortal\(portal\)/);
+  assert.match(explorer,/aria-current/);
+  assert.match(explorer,/Active portal/);
+  assert.doesNotMatch(explorer,/className="entry primary"/);
+  assert.match(explorer,/active===id\?"selected"/);
+});
+
+test("Tutorial 2 Step 6 answers remain rendered and exported after reveal", async () => {
+  const tutorial=await readFile(new URL("../app/tutorials/IonExchangeTutorial.tsx",import.meta.url),"utf8");
+  for(const snippet of ['selected={answers["flow-through"]}','selected={answers.weakest}','selected={answers.last}','selected={answers["why-x"]}']) assert.ok(tutorial.includes(snippet));
+  assert.match(tutorial,/aria-pressed=\{chosen\}/);
+  assert.match(tutorial,/answer-selected/);
+  assert.match(tutorial,/Selected and correct/);
+  assert.match(tutorial,/Selected — try again/);
+  assert.match(tutorial,/responses:\{\.\.\.answers/);
+  const step6=tutorial.slice(tutorial.indexOf('step===5'));
+  assert.ok(step6.indexOf('selected={answers["flow-through"]}')<step6.indexOf('!revealed?'));
+});
