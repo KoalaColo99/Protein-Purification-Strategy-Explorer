@@ -1,0 +1,1 @@
+export function evaluateOperation(x:any):any;export function evaluateFractions(fractions:any[],ids:string[]):any;export function goalsFor(e:any):any[];export function mentorNarrative(e:any,view:string,method:string):any;

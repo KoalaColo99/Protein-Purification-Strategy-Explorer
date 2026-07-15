@@ -150,3 +150,35 @@ test("free explorer guides a pooled sample through gel analysis to evaluation", 
   assert.match(explorer,/What is in the mixture\?/);
   assert.match(explorer,/Was this a good step\?/);
 });
+
+test("mentor evaluates actual metric changes and common scientific limitations", async () => {
+  const {evaluateOperation,goalsFor,mentorNarrative,evaluateFractions}=await import("../app/mentor/mentorEngine.mjs");
+  const proteins=[{id:"enzyme-a",mass:62,pI:5.4},{id:"near-mass",mass:60,pI:8},{id:"near-pi",mass:30,pI:5.6}];
+  const before={id:"crude",name:"Crude",masses:{"enzyme-a":120,"near-mass":500,"near-pi":380},activeTarget:120,pH:7.4,salt:150,volume:100};
+  const after={id:"pool",name:"35–62% pellet",masses:{"enzyme-a":95,"near-mass":310,"near-pi":195},activeTarget:94,pH:7.4,salt:150,volume:33};
+  const e=evaluateOperation({experimentId:"pool",before,after,operation:"Ammonium sulfate",property:"Solubility",proteins});
+  assert.ok(e.metricChanges.totalProteinPercentChange<0);
+  assert.ok(e.metricChanges.yield>75);
+  assert.ok(e.detectedOutcomes.includes("salt_high"));
+  assert.ok(e.unresolvedProblems.includes("target_overlaps_similar_mass_contaminants"));
+  assert.ok(e.unresolvedProblems.includes("target_overlaps_similar_charge_contaminants"));
+  assert.ok(goalsFor(e).some(g=>g.id==="desalt"&&g.methods.includes("dialysis")));
+  assert.match(mentorNarrative(e,"Purification Table","iex").problems.join(" "),/may not bind effectively/i);
+  const fs=[{id:"f1",activity:1,masses:{"enzyme-a":.1,c:10}},{id:"f2",activity:80,masses:{"enzyme-a":8,c:3}},{id:"f3",activity:15,masses:{"enzyme-a":1.5,c:12}}];
+  assert.equal(evaluateFractions(fs,["f2"]).classification,"target_rich_balanced");
+});
+
+test("mentor architecture separates rule state, UI state, and student exports", async () => {
+  const [engine,panel,explorer,tutorial]=await Promise.all(["../app/mentor/mentorEngine.mjs","../app/mentor/MentorPanel.tsx","../app/Explorer.tsx","../app/tutorials/TutorialExperience.tsx"].map(x=>readFile(new URL(x,import.meta.url),"utf8")));
+  assert.match(engine,/metricChanges/);
+  assert.match(engine,/unresolvedProblems/);
+  assert.doesNotMatch(engine,/useState|<section/);
+  assert.match(panel,/Thinking Like a Biochemist/);
+  assert.match(panel,/Full/);assert.match(panel,/Light/);assert.match(panel,/Off/);
+  assert.match(explorer,/mentorReasoning/);
+  assert.match(explorer,/studentWork/);
+  assert.match(explorer,/evidence-context/);
+  assert.match(explorer,/What do you expect the gel to reveal/);
+  assert.match(explorer,/Which sample or fractions contain active Enzyme A/);
+  assert.match(tutorial,/evaluateOperation/);
+});
