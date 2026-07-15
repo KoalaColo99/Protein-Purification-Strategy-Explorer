@@ -143,7 +143,8 @@ test("free explorer guides a pooled sample through gel analysis to evaluation", 
   assert.match(explorer,/next-action/);
   assert.match(explorer,/Molecular-weight marker/);
   assert.match(explorer,/Crude lysate/);
-  assert.match(explorer,/35–62% pellet \(Pool F2\)/);
+  assert.match(explorer,/saltName=config\.retain/);
+  assert.match(explorer,/pellet \(Pool F2\)/);
   assert.match(explorer,/Does the darkest band identify Enzyme A/);
   assert.match(explorer,/SDS-PAGE shows protein abundance, not enzyme identity/);
   assert.match(explorer,/Evaluate this step in the Purification Table/);
