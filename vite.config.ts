@@ -2,7 +2,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: "/protein-purification-strategy-explorer/",
+  base: "/Protein-Purification-Strategy-Explorer/",
   plugins: [react()],
   build: { outDir: "dist", emptyOutDir: true },
 });

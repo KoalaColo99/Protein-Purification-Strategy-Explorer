@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");
-const base = "/protein-purification-strategy-explorer/";
+const base = "/Protein-Purification-Strategy-Explorer/";
 const forbidden = [
   /chatgpt(?:\.site)?/i,
   /localhost/i,

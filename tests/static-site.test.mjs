@@ -7,7 +7,7 @@ const root = new URL("../", import.meta.url);
 test("build emits a project-relative static entry point", async () => {
   const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
   assert.match(html, /Protein Purification Strategy Explorer/);
-  assert.match(html, /\/protein-purification-strategy-explorer\/assets\//);
+  assert.match(html, /\/Protein-Purification-Strategy-Explorer\/assets\//);
   assert.doesNotMatch(html, /_next|cloudflare|worker|chatgpt/i);
   await access(new URL("../dist/.nojekyll", import.meta.url));
 });

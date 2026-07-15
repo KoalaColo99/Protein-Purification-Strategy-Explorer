@@ -66,13 +66,13 @@ Protein definitions are independent of quantities in a sample. A sample records 
 
 The Vite base is fixed to:
 
-`/protein-purification-strategy-explorer/`
+`/Protein-Purification-Strategy-Explorer/`
 
 The workflow in `.github/workflows/deploy-pages.yml` installs dependencies, runs tests, validates the static artifact, and deploys `dist` through GitHub Pages. In the repository’s **Settings → Pages**, set **Source** to **GitHub Actions**. Every push to `main` then publishes the validated site.
 
 Expected project URL:
 
-`https://koalacolo99.github.io/protein-purification-strategy-explorer/`
+`https://koalacolo99.github.io/Protein-Purification-Strategy-Explorer/`
 
 ## Scientific-model limitations
 
