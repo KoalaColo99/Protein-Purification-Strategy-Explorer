@@ -50,3 +50,41 @@ test("tutorial registry contains all six scaffolded steps", async () => {
   for(const title of ["Meet the Sample","Choose a Property","Predict Separation","Find Enzyme A","Pool Fractions","Evaluate Result"]) assert.match(registry,new RegExp(title));
   assert.match(registry,/satisfies TutorialStep\[\]/);
 });
+
+test("tutorial chromatogram labels protein and Enzyme A activity separately", async () => {
+  const tutorial=await readFile(new URL("../app/tutorials/TutorialExperience.tsx",import.meta.url),"utf8");
+  assert.match(tutorial,/Blue-gray: Total protein, measured by A₂₈₀/);
+  assert.match(tutorial,/Orange: Enzyme A activity, measured by the activity assay/);
+  assert.match(tutorial,/Left y-axis|left-axis/);
+  assert.match(tutorial,/right-axis/);
+  assert.match(tutorial,/gel-comparison/);
+  assert.match(tutorial,/figcaption/);
+});
+
+test("ion-exchange rules predict charge, resin charge, and binding", async () => {
+  const {proteinCharge,resinCharge,bindingPrediction}=await import("../app/tutorials/ionExchangeEngine.mjs");
+  assert.equal(proteinCharge(8.5,6.5),"positive");
+  assert.equal(proteinCharge(5.0,7.0),"negative");
+  assert.equal(proteinCharge(7.0,7.1),"approximately neutral");
+  assert.equal(resinCharge("cation"),"negative");
+  assert.equal(resinCharge("anion"),"positive");
+  assert.equal(bindingPrediction({pI:8.5,pH:6.5,resinType:"cation"}).result,"binds");
+  assert.equal(bindingPrediction({pI:8.5,pH:6.5,resinType:"anion"}).result,"flow-through");
+});
+
+test("completion PDF requires a name and embeds submission fields", async () => {
+  const {buildCompletionPdf}=await import("../app/tutorials/completionRecord.mjs");
+  assert.throws(()=>buildCompletionPdf({studentName:"",tutorialNumber:"Guided Tutorial 2",tutorialTitle:"Will the Protein Bind?",version:"1.0",responses:{},attempts:{},outcome:{}}),/name is required/i);
+  const result=buildCompletionPdf({studentName:"Student Example",tutorialNumber:"Guided Tutorial 2",tutorialTitle:"Will the Protein Bind?",version:"1.0",timestamp:"2026-07-15T15:00:00.000Z",responses:{charge:"positive"},attempts:{charge:2},outcome:{result:"binds"}});
+  const pdf=new TextDecoder().decode(result.bytes);
+  assert.match(pdf,/Student Example/);
+  assert.match(pdf,/2026-07-15T15:00:00.000Z/);
+  assert.match(pdf,/Guided Tutorial 2/);
+  assert.match(pdf,/Completion ID: PPS-/);
+});
+
+test("tutorial student data remains session-only and is not transmitted", async () => {
+  const sources=await Promise.all(["TutorialExperience.tsx","IonExchangeTutorial.tsx","completionRecord.mjs"].map(f=>readFile(new URL(`../app/tutorials/${f}`,import.meta.url),"utf8")));
+  const joined=sources.join("\n");
+  assert.doesNotMatch(joined,/localStorage|sessionStorage|fetch\(|XMLHttpRequest|sendBeacon/);
+});
