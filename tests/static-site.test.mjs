@@ -116,11 +116,32 @@ test("tutorial student data remains session-only and is not transmitted", async 
 test("portal selection uses one session-level accessible active state", async () => {
   const explorer=await readFile(new URL("../app/Explorer.tsx",import.meta.url),"utf8");
   assert.match(explorer,/activePortal/);
-  assert.match(explorer,/setActivePortal\(portal\)/);
+  assert.match(explorer,/setActivePortal\(route\.startsWith\("workspace"\)\?"workspace":route\)/);
   assert.match(explorer,/aria-current/);
   assert.match(explorer,/Active portal/);
   assert.doesNotMatch(explorer,/className="entry primary"/);
   assert.match(explorer,/active===id\?"selected"/);
+});
+
+test("learning paths mount one explicit experience and workspace modes preserve entry intent", async () => {
+  const [explorer,tutorial1,tutorial2,engine]=await Promise.all([
+    readFile(new URL("../app/Explorer.tsx",import.meta.url),"utf8"),
+    readFile(new URL("../app/tutorials/TutorialExperience.tsx",import.meta.url),"utf8"),
+    readFile(new URL("../app/tutorials/IonExchangeTutorial.tsx",import.meta.url),"utf8"),
+    readFile(new URL("../app/journeyEngine.mjs",import.meta.url),"utf8")
+  ]);
+  for(const route of ["workspace","workspace-guided","workspace-challenge","workspace-free"]) assert.match(explorer,new RegExp(`"${route}"`));
+  assert.doesNotMatch(explorer,/hidden=\{entry/);
+  assert.match(explorer,/initialMode=\{entry==="workspace-guided"\?"Guided Explorer":entry==="workspace-challenge"\?"Purification Challenge":"Free Exploration"\}/);
+  assert.match(explorer,/FULL STRATEGY WORKSPACE/);
+  assert.match(explorer,/Build a Purification Strategy/);
+  assert.match(explorer,/Begin Guided Strategy/);
+  assert.match(explorer,/Begin Challenge/);
+  assert.match(tutorial1,/Continue to Tutorial 2/);
+  assert.match(tutorial1,/Enter the Strategy Workspace/);
+  assert.match(tutorial2,/Begin the Guided Strategy/);
+  assert.match(tutorial2,/Explore Freely/);
+  assert.doesNotMatch(engine,/appendJourneyEvent/);
 });
 
 test("Tutorial 2 Step 6 answers remain rendered and exported after reveal", async () => {

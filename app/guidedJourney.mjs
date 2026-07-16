@@ -56,6 +56,8 @@ function event(name){return {type:"event",event:name}}
 function stage(id,title,scientificQuestion,studentAction,whyItMatters,recommendedViewId,primaryActionLabel){return {id,title,scientificQuestion,studentAction,whyItMatters,evidenceGenerated:whyItMatters,evidenceLimitations:"Use orthogonal evidence before assigning protein identity.",completionRequirements:[],recommendedViewId,primaryActionId:null,primaryActionLabel,optionalAlternativeActionIds:["review-starting-sample","review-purification-metrics"],completionMessage:`${title} complete.`,conceptLearned:whyItMatters}}
 for(const investigation of Object.values(investigations))for(const item of investigation.orderedStages){item.completionRequirements=requirements[item.id]||[];item.primaryActionId=actions[item.id]||null}
 
+// Legacy compatibility path for older saved/test state. Guided Strategy supplies
+// registryContext and advances through evaluateInvestigation instead.
 export function deriveSolubilityStage(s){
  if(s.conclusionResponse)return "complete";
  if(s.assayReviewed)return "conclusion";
