@@ -47,8 +47,8 @@ test("contextual panel, prepared lineage, challenge availability and export sepa
  const fs=await import("node:fs/promises");
  const explorer=await fs.readFile(new URL("../app/Explorer.tsx",import.meta.url),"utf8");
  const journey=await fs.readFile(new URL("../app/ScientificJourney.tsx",import.meta.url),"utf8");
- assert.match(explorer,/transitionType:"prepared-compatible-sample"/);
- assert.match(explorer,/Instructor-prepared low-salt buffer transition/);
+ assert.match(explorer,/preparedBufferTransition/);
+ assert.match(explorer,/kind:"preparation",method:"Buffer preparation"/);
  assert.match(explorer,/guidedJourneyRecord/);
  assert.match(explorer,/standaloneTutorialRecords/);
  assert.match(explorer,/systemInterpretations/);

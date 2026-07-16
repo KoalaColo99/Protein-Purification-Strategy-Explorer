@@ -1,5 +1,7 @@
 import { proteins } from "./data";
-export type Sample = { id:string; name:string; volume:number; pH:number; salt:number; buffer:string; masses:Record<string,number>; activeTarget:number; lineage:string[]; type:string };
+import { poolLineageTransition } from "./sampleTransitions.mjs";
+export type LineageEntry={operationId:string;operationType:string;sourceSampleId:string;resultingSampleId:string;label:string;sequence:number;metadata:Record<string,unknown>};
+export type Sample = { id:string; name:string; volume:number; pH:number; salt:number; buffer:string; masses:Record<string,number>; activeTarget:number; lineage:LineageEntry[]; type:string };
 export type Fraction = { id:string; n:number; volume:number; masses:Record<string,number>; activity:number; absorbance:number };
 export const totalProtein=(s:{masses:Record<string,number>})=>Object.values(s.masses).reduce((a,b)=>a+b,0);
 export const targetMass=(s:{masses:Record<string,number>})=>s.masses["enzyme-a"]||0;
@@ -36,7 +38,8 @@ export function fractionate(sample:Sample,method:string,config:any):Fraction[]{
  }
  return fractions;
 }
-export function pool(sample:Sample,fs:Fraction[]):Sample{
+export function pool(sample:Sample,fs:Fraction[],operation:{methodId?:string;methodLabel?:string;poolLabel?:string;sequence?:number}={}):Sample{
  const masses=Object.fromEntries(proteins.map(p=>[p.id,fs.reduce((a,f)=>a+(f.masses[p.id]||0),0)]));
- return {id:`pool-${Date.now()}`,name:`Pool F${fs[0].n}–F${fs[fs.length-1].n}`,volume:fs.reduce((a,f)=>a+f.volume,0),pH:sample.pH,salt:sample.salt,buffer:sample.buffer,masses,activeTarget:fs.reduce((a,f)=>a+f.activity/82,0),lineage:fs.map(f=>f.id),type:"Fraction pool"};
+ const resultingSampleId=`pool-${Date.now()}`,sequence=operation.sequence??sample.lineage.length+1,range=`F${fs[0].n}${fs.length>1?`–F${fs[fs.length-1].n}`:""}`,methodLabel=operation.methodLabel||"Purification",poolLabel=operation.poolLabel||`Pool ${range}`,lineage=poolLineageTransition(sample,{resultingSampleId,methodId:operation.methodId,methodLabel,poolLabel,fractionNumbers:fs.map(f=>f.n),sequence});
+ return {id:resultingSampleId,name:poolLabel,volume:fs.reduce((a,f)=>a+f.volume,0),pH:sample.pH,salt:sample.salt,buffer:sample.buffer,masses,activeTarget:fs.reduce((a,f)=>a+f.activity/82,0),lineage,type:"Fraction pool"};
 }
