@@ -5,7 +5,7 @@ import "../app/globals.css";
 import "../app/prediction-sync.css";
 import "../app/workflow-guide.css";
 import "../app/scientific-journey.css";
-import "../app/stale-panel.css";
+import "../app/contextual-panel.css";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Application root element is missing.");

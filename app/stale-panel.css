@@ -1,5 +1,0 @@
-.guided-mode.post-step:not(.analysis-setup) .experiment .setup,
-.guided-mode.post-step:not(.analysis-setup) .experiment .warning,
-.guided-mode.post-step:not(.analysis-setup) .experiment .predict,
-.guided-mode.post-step:not(.analysis-setup) .experiment .estimate,
-.guided-mode.post-step:not(.analysis-setup) .experiment > .run { display: none; }

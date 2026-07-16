@@ -1,0 +1,5 @@
+.guided-context-panel h3 { margin: 14px 0 4px; color: var(--navy); font-size: 11px; }
+.guided-context-panel > p { color: var(--muted); font-size: 10px; line-height: 1.5; }
+.context-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 12px 0; }
+.context-metrics span { padding: 8px; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); font-size: 8px; }
+.context-metrics b { display: block; color: var(--teal); font-size: 12px; margin-bottom: 2px; }

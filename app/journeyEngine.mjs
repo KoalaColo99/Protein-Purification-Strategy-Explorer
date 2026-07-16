@@ -1,0 +1,18 @@
+export function readPath(value,path){return path.split(".").reduce((x,key)=>x?.[key],value)}
+
+export function requirementResult(requirement,context){
+ if(requirement.type==="event")return {complete:(context.events||[]).some(x=>(typeof x==="string"?x:x.type)===requirement.event),missing:requirement.missing||requirement.event};
+ if(requirement.type==="metric"){const actual=readPath(context,requirement.path);const complete=requirement.op===">"?actual>requirement.value:requirement.op===">="?actual>=requirement.value:requirement.op==="==="?actual===requirement.value:false;return {complete,missing:requirement.missing||`${requirement.path} ${requirement.op} ${requirement.value}`};}
+ if(requirement.type==="selection"){const retained=(context.events||[]).findLast?.(x=>x.type==="targetContainingMaterialRetained"||x.type==="ionExchangeTargetPoolRetained");const selected=context.selectedFractions||[];const total=context.totalTargetActivity||0;const selectedActivity=retained?.targetActivity??selected.reduce((n,x)=>n+(x.activity||0),0);const fraction=retained?.targetFraction??(total?selectedActivity/total:0);return {complete:selectedActivity>0&&fraction>=(requirement.minimumTargetFraction||0),missing:requirement.missing||"Select material containing meaningful target activity",details:{selectedActivity,fraction}};}
+ if(requirement.type==="analysis"){const evidence=context.analysisEvidence?.[requirement.analysisId];const complete=!!evidence?.generated&&(!requirement.interpretationAnswered||!!evidence?.interpretationAnswered);return {complete,missing:requirement.missing||`Complete and interpret ${requirement.analysisId}`};}
+ if(requirement.type==="conclusion")return {complete:!!context.conclusions?.[requirement.investigationId]?.submitted,missing:requirement.missing||"Submit an evidence-based conclusion"};
+ return {complete:false,missing:"Unsupported completion requirement"};
+}
+
+export function evaluateStage(stage,context){const results=(stage.completionRequirements||[]).map(x=>requirementResult(x,context));return {complete:results.length>0&&results.every(x=>x.complete),missing:results.filter(x=>!x.complete).map(x=>x.missing),results};}
+
+export function evaluateInvestigation(investigation,context){const stages=investigation.orderedStages.map(stage=>({...stage,evaluation:evaluateStage(stage,context)}));let index=stages.findIndex(x=>!x.evaluation.complete);if(index<0)index=stages.length;return {investigation,stages:stages.map((x,i)=>({...x,status:i<index?"complete":i===index?"current":"future"})),index,activeId:index<stages.length?stages[index].id:"complete",complete:index===stages.length,missing:index<stages.length?stages[index].evaluation.missing:[]};}
+
+export function appendJourneyEvent(state,type,data={}){return {...state,evidenceReviewEvents:[...(state.evidenceReviewEvents||[]),{type,...data,at:new Date().toISOString()}],stageEvidenceById:{...state.stageEvidenceById,[state.activeStageId]:[...(state.stageEvidenceById[state.activeStageId]||[]),{type,...data}]}}}
+
+export function targetSelectionAssessment(fractions,totalTargetActivity,minimumTargetFraction=.1){const selectedActivity=fractions.reduce((n,x)=>n+(x.activity||0),0),fraction=totalTargetActivity?selectedActivity/totalTargetActivity:0;return {valid:selectedActivity>0&&fraction>=minimumTargetFraction,selectedActivity,fraction,reason:selectedActivity<=0?"This selection contains protein but no measurable active Enzyme A.":fraction<minimumTargetFraction?`This selection contains only ${(fraction*100).toFixed(1)}% of the available target activity. Review the activity evidence before continuing.`:"Selection contains meaningful active Enzyme A."};}

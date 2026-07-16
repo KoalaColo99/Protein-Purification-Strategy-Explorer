@@ -34,8 +34,9 @@ test("more than one conclusion can be defensible when supported",()=>{
 test("Investigation 2 begins with compatibility preparation and never auto-runs ion exchange",()=>{
  const inv=investigations["investigation-charge"];
  assert.equal(inv.tutorialId,"tutorial-2");
- assert.equal(inv.orderedStages[1].id,"prepare");
- assert.match(inv.orderedStages[1].whyItMatters,/ionic strength/i);
+ assert.equal(inv.orderedStages[1].id,"charge-rationale");
+ assert.equal(inv.orderedStages[2].id,"prepare");
+ assert.match(inv.orderedStages[2].whyItMatters,/ionic strength/i);
 });
 
 test("guided, challenge, and free presentations are distinct",async()=>{
@@ -57,8 +58,9 @@ test("guided, challenge, and free presentations are distinct",async()=>{
 test("guided analysis methods replace stale purification predictions",async()=>{
  const fs=await import("node:fs/promises");
  const explorer=await fs.readFile(new URL("../app/Explorer.tsx",import.meta.url),"utf8");
- const css=await fs.readFile(new URL("../app/stale-panel.css",import.meta.url),"utf8");
+ const context=await fs.readFile(new URL("../app/Explorer.tsx",import.meta.url),"utf8");
  assert.match(explorer,/id==="gel"\)setPrediction\(\{property:"Molecular mass"/);
  assert.match(explorer,/id==="assay"\)setPrediction\(\{property:"Catalytic activity"/);
- assert.match(css,/post-step:not\(\.analysis-setup\)/);
+ assert.match(context,/GuidedContextPanel/);
+ assert.match(context,/ExperimentPanel/);
 });

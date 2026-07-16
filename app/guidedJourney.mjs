@@ -1,3 +1,5 @@
+import {evaluateInvestigation} from "./journeyEngine.mjs";
+
 export const investigations = {
   "investigation-solubility": {
     id:"investigation-solubility",tutorialId:"tutorial-1",number:1,
@@ -27,22 +29,32 @@ export const investigations = {
     conclusionPrompt:"Did net charge provide better separation of Enzyme A from the remaining contaminants?",
     orderedStages:[
       stage("review-retained","Review retained sample","Is the sample ready for charge separation?","Review salt, pH, and contaminants.","Ion exchange requires compatible salt and buffer conditions.","Current Sample","Review sample"),
-      stage("prepare","Prepare for ion exchange","How will high ammonium sulfate affect binding?","Desalt or use a prepared compatible sample.","High ionic strength competes with protein binding to the resin.","Current Sample","Prepare sample"),
-      stage("charge","Compare pH and pI","What net charge will each protein carry?","Compare buffer pH with protein pI values.","The sign and magnitude of net charge predict resin interaction.","Current Sample","Review pH and pI"),
+      stage("charge-rationale","Understand why charge is useful","Why might charge separate proteins that overlap by mass?","Review the remaining proteins and their pI values.","Charge supplies an orthogonal basis for discrimination when proteins co-migrate by mass.","Current Sample","Why charge may help"),
+      stage("prepare","Address salt compatibility","How will high ammonium sulfate affect binding?","Use an explicitly prepared compatible sample or review preparation guidance.","High ionic strength competes with protein binding to the resin.","Current Sample","Prepare compatible sample"),
+      stage("ph-pi","Compare buffer pH with pI","What net charge will each protein carry?","Compare buffer pH with target and contaminant pI values.","The sign and magnitude of net charge predict resin interaction.","Current Sample","Review pH and pI"),
       stage("exchanger","Choose exchanger","Which resin charge should capture the target?","Choose anion or cation exchange.","Opposite charges attract under compatible conditions.","Current Sample","Choose exchanger"),
       stage("binding-prediction","Predict binding and elution","Will Enzyme A bind, and when should it elute?","Commit a charge-based prediction.","A salt gradient weakens electrostatic interactions.","Chromatogram","Commit prediction"),
+      stage("gradient","Configure salt gradient","What gradient should weaken binding and elute the target?","Configure the salt-gradient endpoint and fraction size.","Gradient conditions control elution strength and resolution.","Current Sample","Configure gradient"),
       stage("run-iex","Run ion exchange","Does net charge provide useful separation?","Run the configured chromatography model.","The chromatogram distributes protein and activity across elution.","Chromatogram","Run ion exchange"),
       stage("interpret-iex","Interpret chromatogram","Which region most likely contains active Enzyme A?","Compare protein signal with activity.","Peak overlap limits what chromatography alone can identify.","Chromatogram","Inspect chromatogram"),
       stage("locate-activity","Locate active Enzyme A","Where is active target concentrated?","Review fraction activity.","Activity anchors target location independently of protein abundance.","Assays","Review activity"),
       stage("pool-iex","Select and pool fractions","Which region balances purity and recovery?","Pool a defensible range.","Pooling determines the final recovery-versus-purity tradeoff.","Fractions","Pool fractions"),
       stage("evaluate-iex","Evaluate purification metrics","Did charge improve the sample?","Compare the purification metrics with Investigation 1.","Specific activity, yield, cost, and time support the judgment.","Purification Table","Evaluate result"),
       stage("compare","Compare investigations","Which property produced the better separation?","Compare solubility and charge evidence.","Orthogonal protein properties can solve different contaminants.","Dashboard","Compare results"),
-      stage("conclusion-iex","Draw a conclusion","Did net charge improve the purification?","Record a defensible conclusion.","The conclusion integrates chromatography, activity, and purification metrics.","Purification Table","Record conclusion")
+      stage("conclusion-iex","Draw a conclusion","Did net charge improve the purification?","Record a defensible conclusion.","The conclusion integrates chromatography, activity, and purification metrics.","Purification Table","Record conclusion"),
+      stage("complete-journey","Complete the Scientific Journey","What did the two investigations establish?","Acknowledge the final evidence summary.","The final synthesis compares two orthogonal purification properties.","Dashboard","Complete Scientific Journey")
     ]
   }
 };
 
-function stage(id,title,scientificQuestion,studentAction,whyItMatters,recommendedViewId,primaryActionLabel){return {id,title,scientificQuestion,studentAction,whyItMatters,evidenceGenerated:whyItMatters,evidenceLimitations:"Use orthogonal evidence before assigning protein identity.",requiredState:id,completionRule:id,recommendedViewId,primaryActionLabel,optionalAlternativeActions:["Review Current Sample","Review purification metrics"],completionMessage:`${title} complete.`,conceptLearned:whyItMatters}}
+const requirements={
+ inspect:[event("startingSampleReviewed")],property:[event("ammoniumSulfateSelected")],configure:[event("fractionationSettingsReviewed")],predict:[event("solubilityPredictionCommitted")],run:[event("fractionationGenerated")],fractions:[event("fractionEvidenceReviewed")],retain:[{type:"selection",minimumTargetFraction:.1},event("targetContainingMaterialRetained")],evaluate:[event("purificationMetricsReviewed")],gel:[{type:"analysis",analysisId:"sds-page",interpretationAnswered:true}],activity:[{type:"analysis",analysisId:"activity-assay",interpretationAnswered:true}],conclusion:[{type:"conclusion",investigationId:"investigation-solubility"}],
+ "review-retained":[event("investigation2SampleReviewed")],"charge-rationale":[event("chargeRationaleReviewed")],prepare:[event("compatibleSamplePrepared")],"ph-pi":[event("phPiReviewed")],exchanger:[event("exchangerChosen")],"binding-prediction":[event("chargePredictionCommitted")],gradient:[event("gradientConfigured")],"run-iex":[event("ionExchangeGenerated")],"interpret-iex":[event("chromatogramInterpreted")],"locate-activity":[event("ionExchangeActivityReviewed")],"pool-iex":[{type:"selection",minimumTargetFraction:.1},event("ionExchangeTargetPoolRetained")],"evaluate-iex":[event("ionExchangeMetricsReviewed")],compare:[event("investigationsCompared")],"conclusion-iex":[{type:"conclusion",investigationId:"investigation-charge"}],"complete-journey":[event("scientificJourneyCompleted")]
+};
+const actions={inspect:"review-starting-sample",property:"select-ammonium-sulfate",configure:"review-fractionation-settings",predict:"commit-solubility-prediction",run:"run-fractionation",fractions:"review-fractions",retain:"pool-target-material",evaluate:"review-purification-metrics",gel:"start-sds-page",activity:"start-activity-assay",conclusion:"answer-solubility-conclusion","review-retained":"review-starting-sample","charge-rationale":"review-charge-rationale",prepare:"use-prepared-compatible-sample","ph-pi":"review-ph-pi",exchanger:"choose-exchanger","binding-prediction":"commit-charge-prediction",gradient:"configure-gradient","run-iex":"run-ion-exchange","interpret-iex":"interpret-chromatogram","locate-activity":"review-iex-activity","pool-iex":"pool-iex-target","evaluate-iex":"review-iex-metrics",compare:"compare-investigations","conclusion-iex":"answer-charge-conclusion","complete-journey":"complete-scientific-journey"};
+function event(name){return {type:"event",event:name}}
+function stage(id,title,scientificQuestion,studentAction,whyItMatters,recommendedViewId,primaryActionLabel){return {id,title,scientificQuestion,studentAction,whyItMatters,evidenceGenerated:whyItMatters,evidenceLimitations:"Use orthogonal evidence before assigning protein identity.",completionRequirements:[],recommendedViewId,primaryActionId:null,primaryActionLabel,optionalAlternativeActionIds:["review-starting-sample","review-purification-metrics"],completionMessage:`${title} complete.`,conceptLearned:whyItMatters}}
+for(const investigation of Object.values(investigations))for(const item of investigation.orderedStages){item.completionRequirements=requirements[item.id]||[];item.primaryActionId=actions[item.id]||null}
 
 export function deriveSolubilityStage(s){
  if(s.conclusionResponse)return "complete";
@@ -60,7 +72,7 @@ export function deriveSolubilityStage(s){
  return "inspect";
 }
 
-export function journeyProgress(investigationId,state){const inv=investigations[investigationId],activeId=investigationId==="investigation-solubility"?deriveSolubilityStage(state):state.activeStageId||inv.orderedStages[0].id;const index=activeId==="complete"?inv.orderedStages.length:Math.max(0,inv.orderedStages.findIndex(x=>x.id===activeId));return {investigation:inv,activeId,index,complete:activeId==="complete",stages:inv.orderedStages.map((x,i)=>({...x,status:i<index?"complete":i===index?"current":"future"}))}}
+export function journeyProgress(investigationId,state){if(state.registryContext)return evaluateInvestigation(investigations[investigationId],state.registryContext);const inv=investigations[investigationId],activeId=investigationId==="investigation-solubility"?deriveSolubilityStage(state):state.activeStageId||inv.orderedStages[0].id;const index=activeId==="complete"?inv.orderedStages.length:Math.max(0,inv.orderedStages.findIndex(x=>x.id===activeId));return {investigation:inv,activeId,index,complete:activeId==="complete",stages:inv.orderedStages.map((x,i)=>({...x,status:i<index?"complete":i===index?"current":"future"}))}}
 
 export const conclusionOptions=[
  "Yes, the sample became substantially purer while retaining acceptable activity.",
